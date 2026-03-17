@@ -495,7 +495,7 @@ const MapComponent = ({ pois, selectedPoi, onAddPin, onDeletePin, onNavigatingCh
   const [userPos, setUserPos] = useState(null);
   const [locating, setLocating] = useState(false);
   const [routingTarget, setRoutingTarget] = useState(null);
-  const [simulationMode, setSimulationMode] = useState(true);
+  const [simulationMode, setSimulationMode] = useState(import.meta.env.DEV);
   const [heading, setHeading] = useState(0);
 
   // Smooth simulation refs
@@ -881,8 +881,8 @@ const MapComponent = ({ pois, selectedPoi, onAddPin, onDeletePin, onNavigatingCh
         )}
       </MapContainer>
 
-      {/* Dev toggle — hide during navigation */}
-      {!isNavigating && (
+      {/* Dev toggle — hide during navigation, and only show in development environment */}
+      {import.meta.env.DEV && !isNavigating && (
         <div className="simulation-toggle-container">
           <label className="simulation-toggle-label">
             <input
