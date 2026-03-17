@@ -1,0 +1,450 @@
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg-color);
+}
+
+/* Header */
+.app-header {
+  background: var(--white);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 12px var(--shadow-color);
+  z-index: 1000;
+  border-bottom: 2px solid var(--unesp-light-blue);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-icon {
+  background: var(--unesp-blue);
+  color: var(--white);
+  padding: 8px;
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand h1 {
+  font-size: 1.25rem;
+  color: var(--unesp-blue);
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.brand p {
+  font-size: 0.8rem;
+  color: var(--text-light);
+}
+
+/* Search Bar Container */
+.search-container {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 400px;
+  z-index: 1000;
+  display: flex;
+  background: var(--white);
+  border-radius: 999px;
+  padding: 6px 16px;
+  box-shadow: 0 8px 24px var(--shadow-color);
+  align-items: center;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  padding: 10px;
+  font-size: 1rem;
+  outline: none;
+  background: transparent;
+  color: var(--text-dark);
+}
+
+.search-input::placeholder {
+  color: #a0a0a0;
+}
+
+.search-icon {
+  color: var(--unesp-blue);
+}
+
+/* Bottom Sheet / Location List */
+.bottom-sheet {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  box-shadow: 0 -8px 24px var(--shadow-color);
+  z-index: 1000;
+  max-height: 50vh;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(calc(100% - 70px));
+}
+
+.bottom-sheet.open {
+  transform: translateY(0);
+}
+
+.sheet-header {
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.drag-handle {
+  width: 40px;
+  height: 5px;
+  background: #d1d5db;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.sheet-title {
+  text-align: center;
+  font-weight: 600;
+  color: var(--text-dark);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 10px;
+}
+
+.sheet-content {
+  overflow-y: auto;
+  padding: 10px 20px 20px;
+  flex: 1;
+}
+
+/* POI List Item */
+.poi-item {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border-radius: var(--border-radius);
+  background: #fdfdfd;
+  margin-bottom: 12px;
+  border: 1px solid #f0f0f0;
+  transition: var(--transition);
+  cursor: pointer;
+  gap: 16px;
+}
+
+.poi-item:hover,
+.poi-item:active {
+  background: var(--unesp-light-blue);
+  border-color: var(--unesp-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 101, 163, 0.1);
+}
+
+.poi-icon {
+  background: var(--white);
+  color: var(--unesp-blue);
+  padding: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.poi-info {
+  flex: 1;
+}
+
+.poi-name {
+  font-weight: 600;
+  color: var(--text-dark);
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.poi-desc {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  line-height: 1.4;
+}
+
+.poi-action {
+  color: var(--unesp-blue);
+  background: var(--unesp-light-blue);
+  padding: 8px;
+  border-radius: 50%;
+}
+
+/* Map area */
+.map-container {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* Controls */
+.locate-btn {
+  position: absolute;
+  bottom: 90px;
+  right: 20px;
+  z-index: 999;
+  background: var(--white);
+  border: 2px solid var(--unesp-blue);
+  color: var(--unesp-blue);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 16px rgba(0, 101, 163, 0.2);
+  transition: var(--transition);
+}
+
+.locate-btn:hover,
+.locate-btn:active {
+  background: var(--unesp-blue);
+  color: var(--white);
+  transform: scale(1.05);
+}
+
+.locate-btn.locating {
+  animation: pulse 1.5s infinite;
+}
+
+/* Custom Leaflet Popup */
+.leaflet-popup-content-wrapper {
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+}
+
+/* Ensure markers don't rotate with the map */
+.leaflet-marker-icon, .leaflet-popup {
+  transition: transform 1.2s ease-out;
+}
+
+.leaflet-popup-content {
+  margin: 16px 20px !important;
+}
+
+.popup-title {
+  color: var(--unesp-blue);
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.popup-desc {
+  color: var(--text-dark);
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+}
+
+.popup-btn {
+  background: var(--unesp-blue);
+  color: var(--white);
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: var(--transition);
+}
+
+.popup-btn:hover {
+  background: var(--unesp-dark-blue);
+}
+
+/* Welcome Overlay */
+.welcome-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 101, 163, 0.95);
+  backdrop-filter: blur(8px);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  color: white;
+  text-align: center;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.welcome-icon {
+  margin-bottom: 24px;
+  background: white;
+  color: var(--unesp-blue);
+  padding: 20px;
+  border-radius: 50%;
+}
+
+.welcome-title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+
+.welcome-desc {
+  font-size: 1.1rem;
+  line-height: 1.5;
+  margin-bottom: 32px;
+  max-width: 400px;
+}
+
+.welcome-btn {
+  background: white;
+  color: var(--unesp-blue);
+  padding: 16px 32px;
+  border-radius: 999px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+}
+
+.welcome-btn:active {
+  transform: scale(0.95);
+}
+
+/* Navigation Banner */
+.nav-banner {
+  position: absolute;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 500px;
+  background: #0f9d58; /* Google Maps Driving Green */
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  z-index: 1000;
+  animation: slideDownNav 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes slideDownNav {
+  from { transform: translate(-50%, -150%); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.nav-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-icon-container {
+  background: rgba(255,255,255,0.2);
+  padding: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-text-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-primary-text {
+  color: white;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.nav-secondary-text {
+  color: rgba(255,255,255,0.9);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.nav-close-btn {
+  background: rgba(0,0,0,0.2);
+  color: white;
+  border-radius: 50%;
+  padding: 8px;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-close-btn:hover {
+  background: rgba(0,0,0,0.4);
+}
+
+.nav-banner.hidden {
+  animation: slideUpNav 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+@keyframes slideUpNav {
+  from { transform: translate(-50%, 0); opacity: 1; }
+  to { transform: translate(-50%, -150%); opacity: 0; }
+}
+
+
+.simulation-toggle-container {
+  position: absolute;
+  top: 140px;
+  right: 16px;
+  z-index: 1000;
+  background: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+}
+
+.simulation-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  cursor: pointer;
+}
+
+.simulation-toggle-label input[type="checkbox"] {
+  accent-color: var(--unesp-blue);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
