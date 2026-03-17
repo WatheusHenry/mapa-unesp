@@ -535,14 +535,70 @@ const MapComponent = ({ pois, selectedPoi, onAddPin, onDeletePin, onNavigatingCh
     }
   }, [simulationMode]);
 
+  // Device Compass handling for real-world orientation
+  const [deviceHeading, setDeviceHeading] = useState(0);
+  const compassListenerAttached = useRef(false);
+
+  const startCompassListener = useCallback(() => {
+    if (compassListenerAttached.current) return;
+
+    const handleOrientation = (e) => {
+      let newHeading = null;
+      // iOS webkit compass
+      if (e.webkitCompassHeading !== undefined) {
+        newHeading = e.webkitCompassHeading;
+      } 
+      // Android alpha (converted to CW bearing)
+      else if (e.alpha !== null) {
+        newHeading = 360 - e.alpha;
+      }
+      
+      if (newHeading !== null) {
+        setDeviceHeading(newHeading);
+      }
+    };
+
+    if ('ondeviceorientationabsolute' in window) {
+      window.addEventListener('deviceorientationabsolute', handleOrientation);
+    } else {
+      window.addEventListener('deviceorientation', handleOrientation);
+    }
+    compassListenerAttached.current = true;
+  }, []);
+
+  const requestCompassPermission = async () => {
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      try {
+        const permission = await DeviceOrientationEvent.requestPermission();
+        if (permission === 'granted') {
+          startCompassListener();
+        }
+      } catch (e) {
+        console.warn("Compass permission rejected", e);
+      }
+    } else {
+      startCompassListener();
+    }
+  };
+
+  // Sync compass with map bearing and user icon heading in real GPS mode
+  useEffect(() => {
+    if (!simulationMode) {
+      setHeading(deviceHeading);
+      setBearing(deviceHeading);
+    }
+  }, [deviceHeading, simulationMode]);
+
   const handleLocateUser = () => {
     setFollowUser(true);
+    requestCompassPermission(); // Ask for compass permission when taking action
     requestLocation();
   };
 
   const handleRouting = (lat, lng) => {
     setFollowUser(true);
     setArrived(false);
+    requestCompassPermission(); // Ask for compass permission when starting route
     // Find destination name from POIs
     const destPoi = pois.find(p => p.coords[0] === lat && p.coords[1] === lng);
     setDestinationName(destPoi ? destPoi.name : 'Destino');
@@ -776,7 +832,7 @@ const MapComponent = ({ pois, selectedPoi, onAddPin, onDeletePin, onNavigatingCh
         <LocationMarker
           userPos={userPos}
           followUser={followUser}
-          heading={isNavigating ? heading : 0}
+          heading={heading}
           isNavigating={isNavigating}
         />
         {selectedPoi && !routingTarget && <FlyToPoi targetPos={selectedPoi.coords} />}
