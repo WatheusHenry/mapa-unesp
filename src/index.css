@@ -1,14 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 :root {
   --unesp-blue: #0065a3;
   --unesp-light-blue: #e6f0f6;
   --unesp-dark-blue: #004975;
-  --text-dark: #333333;
-  --text-light: #666666;
+  --text-dark: #1a1a1a;
+  --text-light: #6b7280;
   --bg-color: #f5f5f5;
   --white: #ffffff;
-  --shadow-color: rgba(0, 0, 0, 0.1);
-  --border-radius: 12px;
-  --transition: all 0.3s ease;
+  --shadow-color: rgba(0, 0, 0, 0.08);
+  --border-radius: 14px;
+  --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Safe areas for notched phones */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 * {
@@ -16,13 +22,25 @@
   margin: 0;
   padding: 0;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent text selection on UI elements but allow on inputs */
+button, .poi-item, .sheet-header, .nav-banner, .welcome-overlay, .locate-btn {
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 body, html {
   width: 100%;
   height: 100%;
   background-color: var(--bg-color);
-  overscroll-behavior-y: none;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
+  position: fixed;
+  touch-action: pan-x pan-y;
 }
 
 #root {
@@ -37,6 +55,12 @@ button {
   border: none;
   background: none;
   font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+a, input, textarea {
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Animations */
@@ -52,24 +76,35 @@ button {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 101, 163, 0.4); }
-  70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(0, 101, 163, 0); }
-  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 101, 163, 0); }
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.4); }
+  70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(26, 115, 232, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(26, 115, 232, 0); }
 }
 
-/* Scrollbar */
+@keyframes itemSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scrollbar — thin and native feeling */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background-color: var(--unesp-light-blue);
+  background-color: rgba(0, 0, 0, 0.15);
   border-radius: 10px;
 }

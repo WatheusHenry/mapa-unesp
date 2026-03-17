@@ -12,6 +12,7 @@
   "dependencies": {
     "framer-motion": "^12.38.0",
     "leaflet": "^1.9.4",
+    "leaflet-rotate": "^0.2.8",
     "leaflet-routing-machine": "^3.2.12",
     "lucide-react": "^0.577.0",
     "react": "^19.2.4",
