@@ -6,10 +6,9 @@ import { getAllPins, addPin as dbAddPin, deletePin as dbDeletePin } from './db';
 
 const unespBuildings = [
   { id: '1', name: 'Biblioteca (Bauru)', description: 'Biblioteca Central do Campus UNESP Bauru.', coords: [-22.349847, -49.032288], isDefault: true },
-  { id: '2', name: 'Restaurante Universitário (RU)', description: 'Refeitório para alunos e funcionários.', coords: [-22.3487, -49.0298], isDefault: true },
-  { id: '3', name: 'Faculdade de Ciências (FC)', description: 'Laboratórios, salas de aula e administrativo da FC.', coords: [-22.3475, -49.0261], isDefault: true },
-  { id: '4', name: 'FAAC', description: 'Faculdade de Arquitetura, Artes, Comunicação e Design.', coords: [-22.3475, -49.0318], isDefault: true },
-  { id: '6', name: 'Portaria Principal', description: 'Entrada principal do campus.', coords: [-22.350056, -49.033639], isDefault: true },
+  { id: '2', name: 'Restaurante Universitário (RU)', description: '', coords: [-22.346682, -49.031271], isDefault: true },
+  { id: '4', name: 'Lab design contemporaneo', description: '', coords: [-22.348733, -49.032077], isDefault: true },
+  { id: '6', name: 'Cantina', description: '', coords: [-22.347223, -49.030804], isDefault: true },
 ];
 
 // Bottom sheet snap points
