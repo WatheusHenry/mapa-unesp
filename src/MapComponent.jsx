@@ -370,10 +370,45 @@ function RoutingMachine({ originPos, targetPos, onRouteFound }) {
       fitSelectedRoutes: true,
       showAlternatives: false,
       createMarker: () => null,
-      router: L.Routing.osrmv1({
-        serviceUrl: 'https://routing.openstreetmap.de/routed-car/route/v1',
-        language: 'en'
-      })
+      router: {
+        route: function (waypoints, callback, context, options) {
+          // Use GraphHopper's free API for significantly better pedestrian routing 
+          // OSRM often snaps to main roads, GraphHopper understands footpaths/campus walkways much better.
+          const url = 'https://graphhopper.com/api/1/route?key=7e2d122d-efbc-4dab-bfa7-3ae1634f5ae0&vehicle=foot&locale=pt-BR&instructions=true&points_encoded=false&type=json' +
+            waypoints.map(wp => '&point=' + wp.latLng.lat + ',' + wp.latLng.lng).join('');
+
+          fetch(url)
+            .then(res => res.json())
+            .then(data => {
+              if (data.paths && data.paths.length > 0) {
+                const path = data.paths[0];
+                const coordinates = L.GeoJSON.coordsToLatLngs(path.points.coordinates, 0);
+
+                // Keep instructions compatible with Leaflet Routing Machine format
+                const instructions = (path.instructions || []).map(inst => ({
+                  text: inst.text,
+                  distance: inst.distance,
+                  time: inst.time,
+                  index: inst.interval[0]
+                }));
+
+                const result = {
+                  name: "GraphHopper Foot",
+                  summary: { totalDistance: path.distance, totalTime: path.time / 1000 },
+                  coordinates: coordinates,
+                  instructions: instructions,
+                  waypoints: waypoints,
+                  inputWaypoints: waypoints,
+                  waypointIndices: [0, coordinates.length - 1]
+                };
+                callback.call(context, null, [result]);
+              } else {
+                callback.call(context, new Error("No route found"));
+              }
+            })
+            .catch(err => callback.call(context, err));
+        }
+      }
     }).addTo(map);
 
     routingRef.current = routingControl;
@@ -547,12 +582,12 @@ const MapComponent = ({ pois, selectedPoi, onAddPin, onDeletePin, onNavigatingCh
       // iOS webkit compass
       if (e.webkitCompassHeading !== undefined) {
         newHeading = e.webkitCompassHeading;
-      } 
+      }
       // Android alpha (converted to CW bearing)
       else if (e.alpha !== null) {
         newHeading = 360 - e.alpha;
       }
-      
+
       if (newHeading !== null) {
         setDeviceHeading(newHeading);
       }
