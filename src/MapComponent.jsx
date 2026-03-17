@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-rotate';
 import 'leaflet-routing-machine';
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
-import { LocateFixed, Navigation, X, Plus } from 'lucide-react';
+import { LocateFixed, Navigation, X, Bookmark } from 'lucide-react';
 
 // Fix for default marker icons in Leaflet with webpack/vite
 delete L.Icon.Default.prototype._getIconUrl;
@@ -55,6 +55,23 @@ const navIcon = L.divIcon({
   iconSize: [48, 48],
   iconAnchor: [24, 24],
   popupAnchor: [0, -24],
+});
+
+// Temporary pin icon (red drop pin for placement preview)
+const tempPinIcon = L.divIcon({
+  className: 'temp-pin-icon',
+  html: `
+    <div class="temp-pin-wrapper">
+      <div class="temp-pin-pulse"></div>
+      <div class="temp-pin-marker">
+        <svg width="32" height="40" viewBox="0 0 24 30" fill="#e53935" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 9 12 18 12 18s12-9 12-18C24 5.37 18.63 0 12 0zm0 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/>
+        </svg>
+      </div>
+    </div>
+  `,
+  iconSize: [32, 40],
+  iconAnchor: [16, 40],
 });
 
 // POI place marker (styled pin with building icon)
@@ -162,8 +179,8 @@ function lerpAngle(from, to, t) {
 
 const unespBauruCenter = [-22.3482, -49.0302];
 
-// Listen for drag events & lock map during navigation
-function MapEvents({ setFollowUser, isNavigating }) {
+// Listen for drag events, lock map during navigation, and handle map click for temp pin
+function MapEvents({ setFollowUser, isNavigating, onMapClick }) {
   const map = useMap();
   useEffect(() => {
     const handleDrag = () => setFollowUser(false);
@@ -182,6 +199,16 @@ function MapEvents({ setFollowUser, isNavigating }) {
     }
   }, [map, isNavigating]);
 
+  // Click on map to place a temporary pin (only when not navigating)
+  useEffect(() => {
+    if (isNavigating || !onMapClick) return;
+    const handleClick = (e) => {
+      onMapClick([e.latlng.lat, e.latlng.lng]);
+    };
+    map.on('click', handleClick);
+    return () => map.off('click', handleClick);
+  }, [map, isNavigating, onMapClick]);
+
   return null;
 }
 
@@ -193,27 +220,6 @@ function ClosePopupsOnNav({ isNavigating }) {
       map.closePopup();
     }
   }, [map, isNavigating]);
-  return null;
-}
-
-// Exposes the current map center to the parent via a ref
-function MapCenterProvider({ mapCenterRef }) {
-  const map = useMap();
-
-  useEffect(() => {
-    const updateCenter = () => {
-      const c = map.getCenter();
-      mapCenterRef.current = { lat: c.lat, lng: c.lng };
-    };
-    updateCenter();
-    map.on('moveend', updateCenter);
-    map.on('zoomend', updateCenter);
-    return () => {
-      map.off('moveend', updateCenter);
-      map.off('zoomend', updateCenter);
-    };
-  }, [map, mapCenterRef]);
-
   return null;
 }
 
@@ -281,13 +287,14 @@ function LocationMarker({ userPos, followUser, heading, isNavigating }) {
   useEffect(() => {
     if (userPos && followUser) {
       if (isNavigating) {
-        // Offset user to lower 30% of screen so they can see the route ahead
+        // Position user in the bottom third of screen — Waze-like view
+        const navZoom = 30;
         const containerHeight = map.getContainer().clientHeight;
-        const offsetY = containerHeight * 0.2; // shift map up by 20% of screen
+        const offsetY = containerHeight * -0.1; // push user down to ~65% of screen height
         const userPoint = map.latLngToContainerPoint(userPos);
         const targetPoint = L.point(userPoint.x, userPoint.y - offsetY);
         const targetLatLng = map.containerPointToLatLng(targetPoint);
-        map.setView(targetLatLng, map.getZoom(), { animate: false });
+        map.setView(targetLatLng, navZoom, { animate: false });
       } else {
         map.panTo(userPos, { animate: true, duration: 0.35, easeLinearity: 0.5 });
       }
@@ -452,7 +459,6 @@ function getNavIconSvg(instruction) {
 const MapComponent = ({ pois, selectedPoi, onAddPin, onDeletePin, onNavigatingChange }) => {
   const [userPos, setUserPos] = useState(null);
   const [locating, setLocating] = useState(false);
-  const mapCenterRef = useRef({ lat: -22.3482, lng: -49.0302 });
   const [routingTarget, setRoutingTarget] = useState(null);
   const [simulationMode, setSimulationMode] = useState(true);
   const [heading, setHeading] = useState(0);
@@ -474,6 +480,24 @@ const MapComponent = ({ pois, selectedPoi, onAddPin, onDeletePin, onNavigatingCh
   // ETA display
   const [routeDistance, setRouteDistance] = useState(null);
   const [routeTime, setRouteTime] = useState(null);
+
+  // Temporary pin for click-to-save flow
+  const [tempPin, setTempPin] = useState(null); // [lat, lng] or null
+
+  const handleMapClick = useCallback((coords) => {
+    setTempPin(coords);
+  }, []);
+
+  const handleConfirmPin = () => {
+    if (tempPin && onAddPin) {
+      onAddPin(tempPin[0], tempPin[1]);
+      setTempPin(null);
+    }
+  };
+
+  const handleCancelTempPin = () => {
+    setTempPin(null);
+  };
 
   // GPS logic
   const requestLocation = useCallback((callback) => {
@@ -693,8 +717,8 @@ const MapComponent = ({ pois, selectedPoi, onAddPin, onDeletePin, onNavigatingCh
         touchRotate={false}
         shiftKeyRotate={false}
       >
-        <MapEvents setFollowUser={setFollowUser} isNavigating={isNavigating} />
-        <MapCenterProvider mapCenterRef={mapCenterRef} />
+        <MapEvents setFollowUser={setFollowUser} isNavigating={isNavigating} onMapClick={handleMapClick} />
+
         <MapRotationController targetBearing={bearing} isNavigating={isNavigating} />
         <ClosePopupsOnNav isNavigating={isNavigating} />
 
@@ -744,6 +768,11 @@ const MapComponent = ({ pois, selectedPoi, onAddPin, onDeletePin, onNavigatingCh
           );
         })}
 
+        {/* Temporary pin (click-to-save preview) */}
+        {tempPin && (
+          <Marker position={tempPin} icon={tempPinIcon} />
+        )}
+
         <LocationMarker
           userPos={userPos}
           followUser={followUser}
@@ -778,19 +807,26 @@ const MapComponent = ({ pois, selectedPoi, onAddPin, onDeletePin, onNavigatingCh
         </div>
       )}
 
-      {/* Map action buttons — hide add-pin when navigating */}
+      {/* Map action buttons */}
       <div className="map-action-buttons">
-        {onAddPin && !isNavigating && (
-          <button
-            onClick={() => {
-              const c = mapCenterRef.current;
-              onAddPin(c.lat, c.lng);
-            }}
-            className="add-pin-btn"
-            aria-label="Salvar local"
-          >
-            <Plus size={24} color="#2e7d32" />
-          </button>
+        {tempPin && !isNavigating && (
+          <>
+            <button
+              onClick={handleCancelTempPin}
+              className="cancel-pin-btn"
+              aria-label="Cancelar pin"
+            >
+              <X size={20} color="#dc2626" />
+            </button>
+            <button
+              onClick={handleConfirmPin}
+              className="add-pin-btn"
+              aria-label="Salvar local"
+            >
+              <Bookmark size={20} color="white" fill="white" />
+              <span>Salvar</span>
+            </button>
+          </>
         )}
         {!isNavigating && (
           <button
@@ -802,13 +838,6 @@ const MapComponent = ({ pois, selectedPoi, onAddPin, onDeletePin, onNavigatingCh
           </button>
         )}
       </div>
-
-      {/* Crosshair center indicator — hide during navigation */}
-      {!isNavigating && (
-        <div className="map-crosshair">
-          <div className="crosshair-dot" />
-        </div>
-      )}
 
       {/* ========== NAVIGATION HUD ========== */}
       {routingTarget && (
