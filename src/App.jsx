@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, Suspense, lazy } from 'react';
 import './App.css';
-import MapComponent from './MapComponent';
 import { Search, MapPin, Map as MapIcon, ChevronUp, Check, X, Plus, Trash2, Bookmark } from 'lucide-react';
 import { getAllPins, addPin as dbAddPin, deletePin as dbDeletePin } from './db';
+
+// Lazy-load the heavy map module (leaflet + plugins ~700kB)
+const MapComponent = lazy(() => import('./MapComponent'));
 
 const unespBuildings = [
   { id: '1', name: 'Bosque', description: 'Bosque do Campus UNESP Bauru.', coords: [-22.349968, -49.031761], isDefault: true },
@@ -199,14 +201,23 @@ function App() {
         </div>
       )}
 
-      {/* Map Module */}
-      <MapComponent
-        pois={allPois}
-        selectedPoi={selectedPoi}
-        onAddPin={handleAddPin}
-        onDeletePin={handleDeletePin}
-        onNavigatingChange={setIsNavigating}
-      />
+      {/* Map Module — lazy-loaded for code splitting */}
+      <Suspense fallback={
+        <div className="map-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e8eef4' }}>
+          <div style={{ textAlign: 'center', color: '#6b7280' }}>
+            <MapPin size={32} style={{ opacity: 0.4, marginBottom: 8 }} />
+            <p style={{ fontSize: '0.85rem', fontWeight: 500 }}>Carregando mapa…</p>
+          </div>
+        </div>
+      }>
+        <MapComponent
+          pois={allPois}
+          selectedPoi={selectedPoi}
+          onAddPin={handleAddPin}
+          onDeletePin={handleDeletePin}
+          onNavigatingChange={setIsNavigating}
+        />
+      </Suspense>
 
       {/* Add Pin Modal */}
       {addPinModal && (

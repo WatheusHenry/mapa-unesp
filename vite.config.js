@@ -130,9 +130,9 @@ export default defineConfig({
 
   // Build optimizations
   build: {
-    // Enable CSS code splitting
     cssCodeSplit: true,
-    // Target modern browsers for smaller bundles
     target: 'es2020',
+    // Leaflet + plugins is ~740kB (irreducible) — already code-split via lazy loading
+    chunkSizeWarningLimit: 800,
   },
 });
