@@ -6,6 +6,7 @@ import 'leaflet-rotate';
 import 'leaflet-routing-machine';
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 import { LocateFixed, Navigation, X, Bookmark } from 'lucide-react';
+import { useWakeLock } from './useWakeLock';
 
 // Fix for default marker icons in Leaflet with webpack/vite
 delete L.Icon.Default.prototype._getIconUrl;
@@ -519,6 +520,50 @@ const MapComponent = ({ pois, selectedPoi, onAddPin, onDeletePin, onNavigatingCh
   // Temporary pin for click-to-save flow
   const [tempPin, setTempPin] = useState(null); // [lat, lng] or null
 
+  // ===== Native-like hooks =====
+  const isNavigating = !!routingTarget && !!currentRoute;
+
+  // Wake Lock — keep screen on during navigation
+  useWakeLock(isNavigating);
+
+  // Continuous GPS tracking via watchPosition (real mode only)
+  const watchIdRef = useRef(null);
+
+  const startContinuousTracking = useCallback(() => {
+    if (simulationMode || watchIdRef.current !== null) return;
+    if (!navigator.geolocation) return;
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setUserPos([latitude, longitude]);
+        setLocating(false);
+      },
+      (err) => console.warn('watchPosition error:', err),
+      { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
+    );
+  }, [simulationMode]);
+
+  const stopContinuousTracking = useCallback(() => {
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+  }, []);
+
+  // Auto-start tracking when navigating in real mode
+  useEffect(() => {
+    if (isNavigating && !simulationMode) {
+      startContinuousTracking();
+    }
+    return () => {
+      if (!isNavigating) stopContinuousTracking();
+    };
+  }, [isNavigating, simulationMode, startContinuousTracking, stopContinuousTracking]);
+
+  // Clean up on unmount
+  useEffect(() => () => stopContinuousTracking(), [stopContinuousTracking]);
+
   const handleMapClick = useCallback((coords) => {
     setTempPin(coords);
   }, []);
@@ -534,7 +579,7 @@ const MapComponent = ({ pois, selectedPoi, onAddPin, onDeletePin, onNavigatingCh
     setTempPin(null);
   };
 
-  // GPS logic
+  // GPS logic — one-shot for initial position, then watchPosition continues
   const requestLocation = useCallback((callback) => {
     setLocating(true);
 
@@ -549,6 +594,10 @@ const MapComponent = ({ pois, selectedPoi, onAddPin, onDeletePin, onNavigatingCh
       return;
     }
 
+    // Start continuous tracking
+    startContinuousTracking();
+
+    // One-shot for immediate response
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -562,13 +611,13 @@ const MapComponent = ({ pois, selectedPoi, onAddPin, onDeletePin, onNavigatingCh
           alert("Ative seu GPS para podermos iniciar o guia.");
           setLocating(false);
         },
-        { enableHighAccuracy: true }
+        { enableHighAccuracy: true, timeout: 10000 }
       );
     } else {
       alert("Geolocalização não suportada.");
       setLocating(false);
     }
-  }, [simulationMode]);
+  }, [simulationMode, startContinuousTracking]);
 
   // Device Compass handling for real-world orientation
   const [deviceHeading, setDeviceHeading] = useState(0);
@@ -788,7 +837,7 @@ const MapComponent = ({ pois, selectedPoi, onAddPin, onDeletePin, onNavigatingCh
     return `${mins} min`;
   };
 
-  const isNavigating = !!routingTarget && !!currentRoute;
+  // isNavigating is now declared earlier (before hooks)
 
   // Notify parent about navigation state changes
   useEffect(() => {
@@ -928,6 +977,16 @@ const MapComponent = ({ pois, selectedPoi, onAddPin, onDeletePin, onNavigatingCh
             <LocateFixed size={24} color={followUser ? '#1a73e8' : '#666'} />
           </button>
         )}
+        {/* Re-center button during navigation (when user drags map away) */}
+        {isNavigating && !followUser && (
+          <button
+            onClick={() => setFollowUser(true)}
+            className="recenter-btn"
+            aria-label="Recentralizar"
+          >
+            <Navigation size={20} color="#1a73e8" />
+          </button>
+        )}
       </div>
 
       {/* ========== NAVIGATION HUD ========== */}
@@ -995,8 +1054,7 @@ const MapComponent = ({ pois, selectedPoi, onAddPin, onDeletePin, onNavigatingCh
                 </div>
               </div>
               <button onClick={clearRouting} className="nav-bottom-cancel" title="Encerrar navegação">
-                <X size={18} />
-                <span>Sair</span>
+                <X size={16} />
               </button>
             </div>
           )}

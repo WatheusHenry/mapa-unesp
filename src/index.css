@@ -10,7 +10,6 @@
   --white: #ffffff;
   --shadow-color: rgba(0, 0, 0, 0.08);
   --border-radius: 14px;
-  --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   
   /* Safe areas for notched phones */
   --safe-top: env(safe-area-inset-top, 0px);
@@ -26,21 +25,28 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Prevent text selection on UI elements but allow on inputs */
-button, .poi-item, .sheet-header, .nav-banner, .welcome-overlay, .locate-btn {
+/* Prevent text selection on UI chrome, allow on inputs */
+button, .poi-item, .sheet-header, .nav-banner, .welcome-overlay,
+.locate-btn, .sheet-tabs, .nav-bottom-bar, .recenter-btn {
   -webkit-user-select: none;
   user-select: none;
+}
+
+/* Prevent long-press context menu on interactive elements */
+button, .poi-item, .map-container {
+  -webkit-touch-callout: none;
 }
 
 body, html {
   width: 100%;
   height: 100%;
   background-color: var(--bg-color);
-  overscroll-behavior: none;
-  -webkit-overflow-scrolling: touch;
   overflow: hidden;
   position: fixed;
   touch-action: pan-x pan-y;
+  /* Disable rubber-band / pull-to-refresh */
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
 }
 
 #root {
@@ -63,16 +69,10 @@ a, input, textarea {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Animations */
+/* Animations — use transform/opacity only (GPU composited) */
 @keyframes slideUp {
-  from {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes fadeIn {
@@ -87,17 +87,11 @@ a, input, textarea {
 }
 
 @keyframes itemSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Scrollbar — thin and native feeling */
+/* Thin scrollbar */
 ::-webkit-scrollbar {
   width: 4px;
 }
@@ -107,4 +101,13 @@ a, input, textarea {
 ::-webkit-scrollbar-thumb {
   background-color: rgba(0, 0, 0, 0.15);
   border-radius: 10px;
+}
+
+/* Accessibility: respect user preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
